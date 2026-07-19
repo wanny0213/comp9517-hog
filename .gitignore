@@ -1,0 +1,10 @@
+# outputs — never commit large files
+results/
+demo_dataset/
+demo_results/
+dataset/
+*.joblib
+*.npy
+__pycache__/
+*.pyc
+.DS_Store
