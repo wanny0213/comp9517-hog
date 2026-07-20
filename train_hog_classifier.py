@@ -106,7 +106,7 @@ def main():
     # ── LinearSVC ─────────────────────────────────────────────────────────────
     print("\nTraining LinearSVC …")
     t0 = time.time()
-    svm = LinearSVC(C=args.svm_c, max_iter=2000, random_state=42)
+    svm = LinearSVC(C=args.svm_c, max_iter=1000, dual=False, random_state=42)
     svm.fit(X_train, y_train)
     svm_train_time = time.time() - t0
     print(f"  Train time: {svm_train_time:.1f}s")
