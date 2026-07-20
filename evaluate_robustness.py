@@ -49,8 +49,8 @@ def evaluate_on_degraded(
     features = np.stack([extract_hog(img) for img in degraded])
 
     t0 = time.time()
-    scores = model.predict_proba(features) if hasattr(model, "predict_proba") else None
-    preds = np.argmax(scores, axis=1) if scores is not None else model.predict(features)
+    scores = model.decision_function(features) if hasattr(model, "decision_function") else model.predict_proba(features)
+    preds = np.argmax(scores, axis=1)
     infer_time = time.time() - t0
 
     top1 = float(np.mean(preds == labels))
@@ -101,10 +101,8 @@ def main():
     # baseline (clean images)
     print("\nEvaluating on clean images …")
     features_clean = np.stack([extract_hog(img) for img in images])
-    if hasattr(model, "predict_proba"):
-        preds_clean = np.argmax(model.predict_proba(features_clean), axis=1)
-    else:
-        preds_clean = model.predict(features_clean)
+    scores_clean = model.decision_function(features_clean) if hasattr(model, "decision_function") else model.predict_proba(features_clean)
+    preds_clean = np.argmax(scores_clean, axis=1)
     p, r, f1, _ = precision_recall_fscore_support(labels, preds_clean, average="macro", zero_division=0)
     records.append({
         "degradation": "clean",

@@ -24,7 +24,6 @@ from pathlib import Path
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     classification_report,
@@ -107,18 +106,14 @@ def main():
     # ── LinearSVC ─────────────────────────────────────────────────────────────
     print("\nTraining LinearSVC …")
     t0 = time.time()
-    # CalibratedClassifierCV wraps LinearSVC to add predict_proba via cross-val
-    # isotonic calibration — needed for proper probability estimates.
-    # Use cv=3 to keep Colab runtime reasonable.
-    base_svc = LinearSVC(C=args.svm_c, max_iter=2000, random_state=42)
-    svm = CalibratedClassifierCV(base_svc, cv=3, method="isotonic")
+    svm = LinearSVC(C=args.svm_c, max_iter=2000, random_state=42)
     svm.fit(X_train, y_train)
     svm_train_time = time.time() - t0
     print(f"  Train time: {svm_train_time:.1f}s")
 
     def _eval(X, y, desc):
         t0 = time.time()
-        scores = svm.predict_proba(X)
+        scores = svm.decision_function(X)  # shape (N, n_classes), works for top-k
         infer_time = time.time() - t0
         preds = np.argmax(scores, axis=1)
         p, r, f1, _ = precision_recall_fscore_support(y, preds, average="macro", zero_division=0)
