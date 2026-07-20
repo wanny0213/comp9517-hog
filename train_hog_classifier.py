@@ -25,6 +25,7 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -86,8 +87,9 @@ def main():
     parser.add_argument("--test",    required=True, help="Path to test split folder")
     parser.add_argument("--out_dir", default="results/hog")
     parser.add_argument("--svm_c",   type=float, default=0.1,
-                        help="LinearSVC regularisation C (0.1 is a good default for HOG)")
+                        help="SVM regularisation C")
     parser.add_argument("--no_rf",   action="store_true", help="Skip Random Forest")
+    parser.add_argument("--use_sgd", action="store_true", help="Use SGDClassifier instead of LinearSVC (faster)")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -103,10 +105,16 @@ def main():
 
     results = {}
 
-    # ── LinearSVC ─────────────────────────────────────────────────────────────
-    print("\nTraining LinearSVC …")
-    t0 = time.time()
-    svm = LinearSVC(C=args.svm_c, max_iter=1000, dual=False, random_state=42)
+    # ── Classifier ────────────────────────────────────────────────────────────
+    if args.use_sgd:
+        print("\nTraining SGDClassifier (hinge loss = linear SVM, parallelised) …")
+        t0 = time.time()
+        svm = SGDClassifier(loss="hinge", alpha=1.0 / (len(X_train) * args.svm_c),
+                            max_iter=1000, n_jobs=-1, random_state=42)
+    else:
+        print("\nTraining LinearSVC …")
+        t0 = time.time()
+        svm = LinearSVC(C=args.svm_c, max_iter=1000, dual=False, random_state=42)
     svm.fit(X_train, y_train)
     svm_train_time = time.time() - t0
     print(f"  Train time: {svm_train_time:.1f}s")
